@@ -195,8 +195,8 @@ gps.info()
 
 
 ####KNeighborsClassifier####
-
-X = np.array(gps.iloc[:, :]);
+newGps = gps.drop(labels = ['Installs'], axis = 1)
+X = np.array(newGps.iloc[:, :]);
 Y = np.array(gps['Installs']);
 
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.30, random_state=10);
@@ -239,7 +239,8 @@ print(sqrt(mean_squared_error(y_test,pred_y)))
 
 
 ############SVM#####
-X = np.array(gps.iloc[:, :]);
+newGps = gps.drop(labels = ['Installs'], axis = 1)
+X = np.array(newGps.iloc[:, :]);
 y = np.array(gps['Installs']);
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
 
