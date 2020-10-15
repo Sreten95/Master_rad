@@ -224,7 +224,8 @@ plt.show()
 
 
 ###########ROOT_MEAN_SQUARED_ERROR#######
-X = np.array(gps.iloc[:, :]);
+newGps = gps.drop(labels = ['Installs'], axis = 1)
+X = np.array(newGps.iloc[:, :]);
 Y = np.array(gps['Installs']);
 
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.30, random_state=10);
