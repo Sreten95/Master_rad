@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.linear_model import LinearRegression, LassoCV
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, mean_squared_log_error, classification_report, confusion_matrix, accuracy_score, recall_score,f1_score , classification_report
 from sklearn import svm
@@ -107,13 +108,78 @@ def sentiment_convert(sentiment):
 gps['Sentiment'] = gps['Sentiment'].map(sentiment_convert)
 
 
+###FILTER METHOD####
+# Reviews feature is correlation
+# plt.figure(figsize=(12,10))
+# cor = gps.corr()
+# sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
+# plt.show()
+
+
 #################LISTWISE######################
-# gps.dropna(subset=['Sentiment'],how='any',inplace=True)
-# gps.dropna(subset=['Sentiment_Polarity'],how='any',inplace=True)
-# gps.dropna(subset=['Sentiment_Subjectivity'],how='any',inplace=True)
-# gps.dropna(subset=['Size'],how='any',inplace=True)
-# gps.dropna(subset=['Rating'],how='any',inplace=True)
-# gps.info()
+gps.dropna(subset=['Sentiment'],how='any',inplace=True)
+gps.dropna(subset=['Sentiment_Polarity'],how='any',inplace=True)
+gps.dropna(subset=['Sentiment_Subjectivity'],how='any',inplace=True)
+gps.dropna(subset=['Size'],how='any',inplace=True)
+gps.dropna(subset=['Rating'],how='any',inplace=True)
+gps.info()
+
+####RFE (Recursive Feature Elimination) WITH LISTWISE####
+# model = LinearRegression()
+# cols = list(['Rating', 'Reviews', 'Size', 'Type', 'Price', 'Sentiment', 'Sentiment_Polarity', 'Sentiment_Subjectivity', 'Category_c', 'Content_Rating_c', 'Genres_c'])
+# newGps = gps.drop(labels = ['Installs'], axis = 1);
+# X = np.array(newGps.iloc[:, :]);
+# y = np.array(gps['Installs']);
+# #no of features
+# nof_list=np.arange(1,12)
+# high_score=0
+# #Variable to store the optimum features
+# nof=0
+# score_list =[]
+# for n in range(len(nof_list)):
+#     X_train, X_test, y_train, y_test = train_test_split(X,y, test_size = 0.3, random_state = 0)
+#     model = LinearRegression()
+#     rfe = RFE(model,nof_list[n])
+#     X_train_rfe = rfe.fit_transform(X_train,y_train)
+#     X_test_rfe = rfe.transform(X_test)
+#     model.fit(X_train_rfe,y_train)
+#     score = model.score(X_test_rfe,y_test)
+#     score_list.append(score)
+#     if(score>high_score):
+#         high_score = score
+#         nof = nof_list[n]
+# print("Optimum number of features: %d" %nof)
+# print("Score with %d features: %f" % (nof, high_score))
+
+
+
+# model = LinearRegression()
+# #Initializing RFE model
+# rfe = RFE(model, 11) #optimum number
+# #Transforming data using RFE
+# X_rfe = rfe.fit_transform(X,y)
+# #Fitting the data to model
+# model.fit(X_rfe,y)
+# temp = pd.Series(rfe.support_,index = cols)
+# selected_features_rfe = temp[temp==True].index
+# print(selected_features_rfe)
+
+########Embedded Method (Lasso) WITH LISTWISE#########
+cols = list(['Rating', 'Reviews', 'Size', 'Type', 'Price', 'Sentiment', 'Sentiment_Polarity', 'Sentiment_Subjectivity', 'Category_c', 'Content_Rating_c', 'Genres_c'])
+newGps = gps.drop(labels = ['Installs'], axis = 1);
+X = np.array(newGps.iloc[:, :]);
+y = np.array(gps['Installs']);
+reg = LassoCV()
+reg.fit(X, y)
+print("Best alpha using built-in LassoCV: %f" % reg.alpha_)
+print("Best score using built-in LassoCV: %f" %reg.score(X,y))
+coef = pd.Series(reg.coef_, index = cols)
+imp_coef = coef.sort_values()
+plt.figure(figsize=(12,10))
+imp_coef.plot(kind = "barh")
+plt.title("Feature importance using Lasso Model")
+plt.show()
+
 ################PAIRWISE#######################
 # gps.info()
 # gps['Sentiment'].mean()
