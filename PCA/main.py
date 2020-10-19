@@ -7,6 +7,7 @@ from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.linear_model import LinearRegression, LassoCV
 from sklearn.model_selection import train_test_split, cross_val_score
+import seaborn as sns
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, mean_squared_log_error, classification_report, confusion_matrix, accuracy_score, recall_score,f1_score , classification_report
 from sklearn import svm
 from math import sqrt
@@ -15,6 +16,9 @@ warnings.filterwarnings('ignore')
 
 gps1 = pd.read_csv("C:/Users/Admin/Downloads/google-play-store-apps/googleplaystore.csv") #change path
 gps2 = pd.read_csv("C:/Users/Admin/Downloads/google-play-store-apps/googleplaystore_user_reviews.csv") #change path
+
+gps1.drop_duplicates(keep=False, inplace=True)
+gps2.drop_duplicates(keep=False, inplace=True)
 
 gps = pd.merge(gps1, gps2, how='inner', on=['App'])
 gps['Rating'] = gps['Rating'].astype(str).astype(float)
@@ -84,15 +88,13 @@ for i in range(len(GenresL)):
     GenresDict[GenresL[i]] = i
 gps['Genres_c'] = gps['Genres'].map(GenresDict).astype(int)
 
-#Convert App to integer
-App = gps.App.unique()
-AppDict = {}
-for i in range(len(App)):
-    AppDict[App[i]] = i
-gps['App_c'] = gps['App'].map(AppDict).astype(int)
+plt.figure(figsize=(12,10))
+cor = gps.corr()
+sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
+plt.show()
 
 #Remove App because now have App_c which is integer
-gps.drop(labels = ['Last Updated','Current Ver','Android Ver','Genres','Category','App','Translated_Review'], axis = 1, inplace = True)
+gps.drop(labels = ['Last Updated','Current Ver','Android Ver','Genres','Category','App','Translated_Review', 'Reviews', 'Size'], axis = 1, inplace = True)
 
 
 def sentiment_convert(sentiment):
@@ -110,19 +112,19 @@ gps['Sentiment'] = gps['Sentiment'].map(sentiment_convert)
 
 ###FILTER METHOD####
 # Reviews feature is correlation
-# plt.figure(figsize=(12,10))
-# cor = gps.corr()
-# sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
-# plt.show()
+plt.figure(figsize=(12,10))
+cor = gps.corr()
+sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
+plt.show()
 
 
 #################LISTWISE######################
-gps.dropna(subset=['Sentiment'],how='any',inplace=True)
-gps.dropna(subset=['Sentiment_Polarity'],how='any',inplace=True)
-gps.dropna(subset=['Sentiment_Subjectivity'],how='any',inplace=True)
-gps.dropna(subset=['Size'],how='any',inplace=True)
-gps.dropna(subset=['Rating'],how='any',inplace=True)
-gps.info()
+# gps.dropna(subset=['Sentiment'],how='any',inplace=True)
+# gps.dropna(subset=['Sentiment_Polarity'],how='any',inplace=True)
+# gps.dropna(subset=['Sentiment_Subjectivity'],how='any',inplace=True)
+#
+# gps.dropna(subset=['Rating'],how='any',inplace=True)
+# gps.info()
 
 ####RFE (Recursive Feature Elimination) WITH LISTWISE####
 # model = LinearRegression()
@@ -165,20 +167,20 @@ gps.info()
 # print(selected_features_rfe)
 
 ########Embedded Method (Lasso) WITH LISTWISE#########
-cols = list(['Rating', 'Reviews', 'Size', 'Type', 'Price', 'Sentiment', 'Sentiment_Polarity', 'Sentiment_Subjectivity', 'Category_c', 'Content_Rating_c', 'Genres_c'])
-newGps = gps.drop(labels = ['Installs'], axis = 1);
-X = np.array(newGps.iloc[:, :]);
-y = np.array(gps['Installs']);
-reg = LassoCV()
-reg.fit(X, y)
-print("Best alpha using built-in LassoCV: %f" % reg.alpha_)
-print("Best score using built-in LassoCV: %f" %reg.score(X,y))
-coef = pd.Series(reg.coef_, index = cols)
-imp_coef = coef.sort_values()
-plt.figure(figsize=(12,10))
-imp_coef.plot(kind = "barh")
-plt.title("Feature importance using Lasso Model")
-plt.show()
+# cols = list(['Rating', 'Reviews', 'Size', 'Type', 'Price', 'Sentiment', 'Sentiment_Polarity', 'Sentiment_Subjectivity', 'Category_c', 'Content_Rating_c', 'Genres_c'])
+# newGps = gps.drop(labels = ['Installs'], axis = 1);
+# X = np.array(newGps.iloc[:, :]);
+# y = np.array(gps['Installs']);
+# reg = LassoCV()
+# reg.fit(X, y)
+# print("Best alpha using built-in LassoCV: %f" % reg.alpha_)
+# print("Best score using built-in LassoCV: %f" %reg.score(X,y))
+# coef = pd.Series(reg.coef_, index = cols)
+# imp_coef = coef.sort_values()
+# plt.figure(figsize=(12,10))
+# imp_coef.plot(kind = "barh")
+# plt.title("Feature importance using Lasso Model")
+# plt.show()
 
 ################PAIRWISE#######################
 # gps.info()
@@ -193,16 +195,16 @@ plt.show()
 # gps.drop(labels = ['Sentiment', 'Sentiment_Polarity', 'Sentiment_Subjectivity', 'Size', 'Rating'], axis = 1, inplace = True)
 # gps.info()
 ##################MEAN#########################
-# gps.info()
-# mean_imputer = SimpleImputer(strategy='mean')# strategy can also be mean or median
-# gps.iloc[:,:] = mean_imputer.fit_transform(gps)
-# gps.info()
-
-##################MEDIAN#########################
 gps.info()
-mean_imputer = SimpleImputer(strategy='median')# strategy can also be mean or median
+mean_imputer = SimpleImputer(strategy='mean')# strategy can also be mean or median
 gps.iloc[:,:] = mean_imputer.fit_transform(gps)
 gps.info()
+
+##################MEDIAN#########################
+# gps.info()
+# mean_imputer = SimpleImputer(strategy='median')# strategy can also be mean or median
+# gps.iloc[:,:] = mean_imputer.fit_transform(gps)
+# gps.info()
 
 ##################MODE############################
 # gps.info();
@@ -261,9 +263,8 @@ gps.info()
 
 
 ####KNeighborsClassifier####
-newGps = gps.drop(labels = ['Installs'], axis = 1)
-X = np.array(newGps.iloc[:, :]);
-Y = np.array(gps['Installs']);
+X = gps.drop(labels = ['Installs'], axis = 1)
+Y = gps['Installs'];
 
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.30, random_state=10);
 
@@ -275,47 +276,47 @@ for k in k_values:
     cv_scores = cross_val_score(knn, X_train, y_train, cv=5, scoring='accuracy')
     k_acc_scores.append(cv_scores.mean())
 
-optimal_k = k_values[k_acc_scores.index(max(k_acc_scores))]
+# optimal_k = k_values[k_acc_scores.index(max(k_acc_scores))]
 scores = []
 for n in k_values:
     knn.set_params(n_neighbors=n)
     knn.fit(X_train, y_train)
     scores.append(knn.score(X_test, y_test))
 print(scores) #find optimal k in range(1,100)
-
-plt.plot(k_values,k_acc_scores)
-plt.xlabel("Vrijednost k")
-plt.ylabel('Koeficijent determinacije')
-plt.show()
+#
+# plt.plot(k_values,k_acc_scores)
+# plt.xlabel("Vrijednost k")
+# plt.ylabel('Koeficijent determinacije')
+# plt.show()
 
 
 ###########ROOT_MEAN_SQUARED_ERROR#######
-newGps = gps.drop(labels = ['Installs'], axis = 1)
-X = np.array(newGps.iloc[:, :]);
-Y = np.array(gps['Installs']);
-
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.30, random_state=10);
-
-knn = KNeighborsClassifier(n_neighbors=9) #depends of optimal k
-
-knn.fit(X_train, y_train)
-pred_y = knn.predict(X_test)
-
-print(sqrt(mean_squared_error(y_test,pred_y)))
+# newGps = gps.drop(labels = ['Installs'], axis = 1)
+# X = np.array(newGps.iloc[:, :]);
+# Y = np.array(gps['Installs']);
+#
+# X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.30, random_state=10);
+#
+# knn = KNeighborsClassifier(n_neighbors=9) #depends of optimal k
+#
+# knn.fit(X_train, y_train)
+# pred_y = knn.predict(X_test)
+#
+# print(sqrt(mean_squared_error(y_test,pred_y)))
 
 
 
 ############SVM#####
-newGps = gps.drop(labels = ['Installs'], axis = 1)
-X = np.array(newGps.iloc[:, :]);
-y = np.array(gps['Installs']);
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
-
-sv1 = svm.SVC(kernel='rbf')
-sv1.fit(X_train,y_train)
-result = sv1.predict(X_test)
-
-
-print(accuracy_score(y_test, result))
-print(sqrt(mean_squared_error(y_test,result)))
+# newGps = gps.drop(labels = ['Installs'], axis = 1)
+# X = np.array(newGps.iloc[:, :]);
+# y = np.array(gps['Installs']);
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.30)
+#
+# sv1 = svm.SVC(kernel='rbf')
+# sv1.fit(X_train,y_train)
+# result = sv1.predict(X_test)
+#
+#
+# print(accuracy_score(y_test, result))
+# print(sqrt(mean_squared_error(y_test,result)))
 
